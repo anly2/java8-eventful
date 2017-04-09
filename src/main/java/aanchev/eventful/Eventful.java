@@ -154,6 +154,10 @@ public interface Eventful<E> {
 	
 	/* Inner Types and Exceptions */
 	
+	/**
+	 * A Functional Interface (like {@link java.util.function.Consumer Consumer})
+	 * that can potentially throw {@link VetoEventException} or {@link ConsumeEventException}.
+	 */
 	public interface Handler<DATA> {
 		public void handle(DATA event) throws VetoEventException, ConsumeEventException;
 		
@@ -170,11 +174,24 @@ public interface Eventful<E> {
 	}
 
 	
-	public static class VetoEventException extends Exception {
+	/**
+	 * An exception that allows a handler to stop the invocation of subsequent handlers for that event.
+	 * This is very similar to {@link VetoEventException},
+	 * except the triggering call to {@link Eventful#fire(String, Object)} will return with <code>true</code>,
+	 * indicating a successful, albeit premature completion.
+	 */
+	public static class ConsumeEventException extends Exception {
 		private static final long serialVersionUID = 1L;
 	}
-
-	public static class ConsumeEventException extends Exception {
+	
+	/**
+	 * An exception that allows a handler to stop the invocation of subsequent handlers for that event.
+	 * This is very similar to {@link ConsumeEventException},
+	 * except the triggering call to {@link Eventful#fire(String, Object)} will return with <code>false</code>,
+	 * indicating a failure.
+	 * For more specific error indications, custom runtime exceptions can be thrown.
+	 */
+	public static class VetoEventException extends Exception {
 		private static final long serialVersionUID = 1L;
 	}
 
