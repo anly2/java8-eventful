@@ -1,6 +1,8 @@
 # java8-eventful
 A Java Interface that makes use of defaults and lambda to provide an Event Bus/System functionality in a convenient way.
 
+Please see the javadoc of `Eventful`.
+
 ## Example
 ```java
 Eventful<Exception> eventful;
