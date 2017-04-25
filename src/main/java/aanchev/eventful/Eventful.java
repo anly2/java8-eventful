@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import aanchev.eventful.Eventful.Ranked;
-
 
 /**
  * An interface that provides an Event Bus/System implementation through default methods.
