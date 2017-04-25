@@ -13,9 +13,6 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import aanchev.eventful.Eventful.Handler;
-import aanchev.eventful.Eventful.Ranked.RankedHandler;
-
 public class EventfulTest {
 	
 	public static class Expectations<E> {

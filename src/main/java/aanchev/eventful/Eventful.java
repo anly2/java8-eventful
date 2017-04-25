@@ -5,9 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.SortedSet;
 
-import aanchev.eventful.Eventful.Ranked.PrioritySet;
+import aanchev.eventful.Eventful.Ranked;
 
 
 /**
@@ -150,50 +149,6 @@ public interface Eventful<E> {
 			return true;
 		}
 	}
-	
-	
-	/* Inner Types and Exceptions */
-	
-	/**
-	 * A Functional Interface (like {@link java.util.function.Consumer Consumer})
-	 * that can potentially throw {@link VetoEventException} or {@link ConsumeEventException}.
-	 */
-	public interface Handler<DATA> {
-		public void handle(DATA event) throws VetoEventException, ConsumeEventException;
-		
-		@SuppressWarnings("unchecked")
-		public default boolean tryHandle(Object data) throws VetoEventException, ConsumeEventException {
-			try {
-				handle((DATA) data);
-				return true;
-			}
-			catch (ClassCastException e) {
-				return false;
-			}
-		}
-	}
-
-	
-	/**
-	 * An exception that allows a handler to stop the invocation of subsequent handlers for that event.
-	 * This is very similar to {@link VetoEventException},
-	 * except the triggering call to {@link Eventful#fire(String, Object)} will return with <code>true</code>,
-	 * indicating a successful, albeit premature completion.
-	 */
-	public static class ConsumeEventException extends Exception {
-		private static final long serialVersionUID = 1L;
-	}
-	
-	/**
-	 * An exception that allows a handler to stop the invocation of subsequent handlers for that event.
-	 * This is very similar to {@link ConsumeEventException},
-	 * except the triggering call to {@link Eventful#fire(String, Object)} will return with <code>false</code>,
-	 * indicating a failure.
-	 * For more specific error indications, custom runtime exceptions can be thrown.
-	 */
-	public static class VetoEventException extends Exception {
-		private static final long serialVersionUID = 1L;
-	}
 
 	
 	/* Specialized Implementations */
@@ -279,95 +234,6 @@ public interface Eventful<E> {
 		}
 		
 
-		public static class RankedHandler<DATA> implements Handler<DATA>, Comparable<RankedHandler<DATA>> {
-			private final Handler<DATA> handler;
-			public final int priority;
-			
-			
-			/* Constructors */
-			
-			public RankedHandler(Handler<DATA> handler, int priority) {
-				this.handler = handler;
-				this.priority = priority;
-			}
-
-			
-			/* Proxy Handler */
-			
-			public void handle(DATA event) throws VetoEventException, ConsumeEventException {
-				handler.handle(event);
-			}
-			
-			@Override
-			public boolean tryHandle(Object data) throws VetoEventException, ConsumeEventException {
-				return handler.tryHandle(data);
-			}
-			
-			
-			/* Comparable Contract  */
-			
-			@Override
-			public int compareTo(RankedHandler<DATA> other) {
-				if (this.handler == other.handler)
-					return 0;
-				
-				return Integer.compare(this.priority, other.priority);
-			}
-			
-			
-			/* Proxy Object */
-			
-			@Override
-			public boolean equals(Object obj) {
-				if (obj instanceof RankedHandler) {
-					@SuppressWarnings("rawtypes")
-					RankedHandler other = (RankedHandler) obj;
-					return ((this.handler.equals(other.handler)) );//&& (this.priority == other.priority));	
-				}
-
-				if (obj instanceof Handler)
-					return this.handler.equals(obj);
-
-				return false;
-			}
-			
-			@Override
-			public int hashCode() {
-				return handler.hashCode(); // + priority;
-			}
-		}
-		
-		public static class PrioritySet<E> extends PriorityQueue<E> implements SortedSet<E> {
-
-			@Override
-			public E first() {
-				return super.peek();
-			}
-
-			@Override
-			public E last() {
-				throw new UnsupportedOperationException();
-			}
-
-			
-			@Override
-			public SortedSet<E> headSet(E pivot) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public SortedSet<E> tailSet(E pivot) {
-				throw new UnsupportedOperationException();
-			}
-
-			
-			@Override
-			public SortedSet<E> subSet(E start, E end) {
-				throw new UnsupportedOperationException();
-			}
-		}
-
-		
 		/**
 		 * A sub-interface of {@link Eventful.Ranked} that also adds the convenience of {@link Eventful.Default}.
 		 * 
