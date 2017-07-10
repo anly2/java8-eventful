@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-@Deprecated
 public class OrganizingEventStreamTest {
 
 
@@ -33,6 +32,7 @@ public class OrganizingEventStreamTest {
 
 	@Test
 	public void reportSpeedSame() {
+		System.out.println("Report with Same streams...");
 		reportSpeedComparison(
 				new EventStream.Default<Elem>(){},
 				new EventStream.Default<Elem>(){});
@@ -40,9 +40,10 @@ public class OrganizingEventStreamTest {
 
 	@Test
 	public void reportSpeedDiff() {
+		System.out.println("Report with Different streams...");
 		reportSpeedComparison(
 				new EventStream.Default<Elem>(){},
-				new EventStream.Default.Organizing<Elem>(){});
+				new EventStream.Organizing.Default<Elem>(){});
 	}
 
 	public static void reportSpeedComparison(EventStream<Elem> evn0, EventStream<Elem> evn1) {

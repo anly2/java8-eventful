@@ -3,11 +3,11 @@ package aanchev.eventful;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
+
+import aanchev.eventful.Eventful.Ranked;
 
 //TODO tests
 //TODO javadoc
@@ -66,58 +66,68 @@ public interface EventStream<E> {
 		public default Collection<Handler<E>> getHandlers() {
 			return (Set) eventStreams.computeIfAbsent(this, k -> new HashSet<>());
 		}
-
-
-		@Deprecated
-		public interface Organizing<E> extends Default<E>, EventStream.Organizing<E> {
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			@Override
-			public default Queue<Handler<E>> getHandlers() {
-				return (Queue) eventStreams.computeIfAbsent(this, k -> new LinkedList<>());
-			}
-		}
 	}
 
-	@Deprecated
 	public interface Organizing<E> extends EventStream<E> {
+		final static Map<Object, Map<Class<?>, Collection<Handler<Object>>>> eventCaches = new HashMap<>();
+
+		@Override
+		default Handler<? extends E> on(Handler<? extends E> handler) {
+			//can potentially be done better, but not worth the effort considering the usual use case
+			eventCaches.remove(this);
+
+			return EventStream.super.on(handler);
+		}
+
+		@SuppressWarnings("unchecked")
 		@Override
 		default boolean fire(E data) {
-			Queue<Handler<E>> handlers;
+			Map<Class<?>, Collection<Handler<Object>>> eventCache = eventCaches.computeIfAbsent(this, k -> new HashMap<>());
 
-			try {
-				handlers = (Queue<Handler<E>>) getHandlers();
-			}
-			catch (ClassCastException e) {
-				return EventStream.super.fire(data);
-			}
+			Collection<Handler<Object>> cached = eventCache.get(data.getClass());
 
-			if (handlers == null)
-				return true;
+			if (cached == null) {
+				cached = new LinkedList<>();
+				eventCache.put(data.getClass(), cached);
+				Collection<Handler<E>> handlers = getHandlers();
 
-			Collection<Handler<E>> requeued = new LinkedList<>();
-			try {
-				Iterator<Handler<E>> it = handlers.iterator();
-				Handler<E> handler;
-				while (it.hasNext()) {
-					handler = it.next();
-					if (!handler.tryHandle(data)) {
-						it.remove();
-						requeued.add(handler);
+				if (handlers == null)
+					return true;
+
+				try {
+					for (Handler<?> handler : handlers) {
+						if (handler.tryHandle(data))
+							cached.add((Handler<Object>) handler);
 					}
-				}
 
-				return true;
+					return true;
+				}
+				catch (VetoEventException e) {
+					return false;
+				}
+				catch (ConsumeEventException e) {
+					return true;
+				}
 			}
-			catch (VetoEventException e) {
-				return false;
-			}
-			catch (ConsumeEventException e) {
-				return true;
-			}
-			finally {
-				handlers.addAll(requeued);
+			else {
+				try {
+					for (Handler<?> handler : cached) {
+						handler.tryHandle(data);
+					}
+
+					return true;
+				}
+				catch (VetoEventException e) {
+					return false;
+				}
+				catch (ConsumeEventException e) {
+					return true;
+				}
 			}
 		}
+
+
+		public interface Default<E> extends Organizing<E>, EventStream.Default<E> {}
 	}
 
 	public interface Ranked<E> extends EventStream.Default<E> {
