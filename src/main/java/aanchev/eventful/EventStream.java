@@ -7,8 +7,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import aanchev.eventful.Eventful.Ranked;
-
 //TODO tests
 //TODO javadoc
 public interface EventStream<E> {
